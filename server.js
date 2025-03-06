@@ -25,6 +25,10 @@ if (process.env.NODE_ENV === "development") {
 // Enable CORS
 app.use(cors());
 
+app.get("/", (req, res) => {
+  res.status(200).json({ success: true, message: "Hello from quiz app!" });
+});
+
 const PORT = process.env.PORT || 5000;
 
 const server = app.listen(
