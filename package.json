@@ -1,0 +1,45 @@
+{
+  "name": "quiz_app",
+  "version": "1.0.0",
+  "description": "The quiz application is designed to facilitate efficient quiz management, student participation, and performance tracking. It features role-based authentication, allowing students to attempt quizzes while enabling teachers/admins to create and manage quizzes. Key functionalities include customizable quiz settings (time limits, question randomization, negative marking), real-time scoring, detailed feedback, and leaderboards. The admin dashboard provides user management and comprehensive reports. The system is built for high performance, scalability, and security, ensuring smooth user experiences with secure authentication and anti-cheating measures. The technology stack includes React.js for the frontend, Node.js (Express) for the backend, and Firebase Auth for secure authentication.",
+  "main": "server.js",
+  "scripts": {
+    "start": "NODE_ENV=production node server",
+    "dev": "nodemon server"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rumonkh0/quiz_app.git"
+  },
+  "keywords": [
+    "quiz",
+    "web",
+    "management",
+    "exam",
+    "test",
+    "student",
+    "improve",
+    "score",
+    "education",
+    "learn"
+  ],
+  "author": "Rumon Khan & Rasel Hossain",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rumonkh0/quiz_app/issues"
+  },
+  "homepage": "https://github.com/rumonkh0/quiz_app#readme",
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "nodemailer": "^6.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}
