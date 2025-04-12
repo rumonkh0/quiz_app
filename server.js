@@ -14,6 +14,8 @@ dotenv.config({ path: "./config/config.env" });
 connectDB();
 
 const auth = require("./routes/auth");
+const quiz = require("./routes/quiz");
+const classroom = require("./routes/classroom");
 
 const app = express();
 
@@ -31,7 +33,10 @@ if (process.env.NODE_ENV === "development") {
 // Enable CORS
 app.use(cors());
 
+//Mount routes
 app.use("/api/v1/auth", auth);
+app.use("/api/v1/quizzes", quiz);
+app.use("/api/v1/classrooms", classroom);
 app.get("/", (req, res) => {
   res.status(200).json({ success: true, message: "Hello from quiz app!" });
 });
