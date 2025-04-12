@@ -5,13 +5,15 @@ const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const errorHandler = require("./middleware/error");
-const connectDB = require('./config/db');
+const connectDB = require("./config/db");
 
 // Load env vars
 dotenv.config({ path: "./config/config.env" });
 
 // Connect to database
 connectDB();
+
+const auth = require("./routes/auth");
 
 const app = express();
 
@@ -29,6 +31,7 @@ if (process.env.NODE_ENV === "development") {
 // Enable CORS
 app.use(cors());
 
+app.use("/api/v1/auth", auth);
 app.get("/", (req, res) => {
   res.status(200).json({ success: true, message: "Hello from quiz app!" });
 });
