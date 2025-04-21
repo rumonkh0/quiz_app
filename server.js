@@ -4,6 +4,7 @@ const dotenv = require("dotenv");
 const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
+const moment = require("moment");
 const errorHandler = require("./middleware/error");
 const connectDB = require("./config/db");
 
@@ -27,7 +28,26 @@ app.use(cookieParser());
 
 // Dev logging middleware
 if (process.env.NODE_ENV === "development") {
-  app.use(morgan("dev"));
+  // Add a timestamp before the morgan log output
+  function getTime() {
+    return new Date().toLocaleTimeString();
+  }
+
+  // Morgan setup
+  const customMorgan = morgan("dev", {
+    stream: {
+      write: (message) => {
+        process.stdout.write(`[${getTime()}] ${message}`);
+      },
+    },
+  });
+
+  app.use(customMorgan);
+  // morgan.token("timestamp", () => {
+  //   return moment().format("YYYY-MM-DD HH:mm:ss");
+  // });
+
+  // app.use(morgan(":timestamp :method :url :status :response-time ms"));
 }
 
 // Enable CORS

@@ -65,7 +65,7 @@ exports.login = asyncHandler(async (req, res, next) => {
   if (!isMatch) {
     return next(new ErrorResponse("Invalid credentials", 401));
   }
-
+  user.password = undefined;
   sendTokenResponse(user, 200, res);
 });
 
@@ -130,7 +130,7 @@ exports.updatePassword = asyncHandler(async (req, res, next) => {
 
   user.password = req.body.newPassword;
   await user.save();
-
+  user.password = undefined;
   sendTokenResponse(user, 200, res);
 });
 
@@ -262,5 +262,6 @@ const sendTokenResponse = (user, statusCode, res) => {
   res.status(statusCode).cookie("token", token, options).json({
     success: true,
     token,
+    user,
   });
 };

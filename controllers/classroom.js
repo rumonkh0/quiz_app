@@ -6,11 +6,28 @@ const Classroom = require("../models/Classroom");
 // @route   POST /api/classrooms
 // @access  Private (Teacher only)
 exports.createClassroom = asyncHandler(async (req, res, next) => {
-  const { name, description } = req.body;
+  const { name } = req.body;
+
+  let code;
+  let classroomExists = true;
+
+  const characters = "abcdefghijklmnopqrstuvwxyz0123456789";
+
+  while (classroomExists) {
+    code = Array.from(
+      { length: 6 },
+      () => characters[Math.floor(Math.random() * characters.length)]
+    ).join("");
+
+    const existingClassroom = await Classroom.findOne({ code });
+    if (!existingClassroom) {
+      classroomExists = false;
+    }
+  }
 
   const classroom = await Classroom.create({
     name,
-    description,
+    code,
     teacher: req.user._id,
   });
 
@@ -21,10 +38,12 @@ exports.createClassroom = asyncHandler(async (req, res, next) => {
 // @route   GET /api/classrooms/teacher
 // @access  Private (Teacher only)
 exports.getTeacherClassrooms = asyncHandler(async (req, res, next) => {
-  const classrooms = await Classroom.find({ teacher: req.user._id })
-    .populate("teacher", "name email")
-    .populate("students", "name email")
-    .populate("quizzes", "title");
+  const classrooms = await Classroom.find({ teacher: req.user._id }).populate(
+    "teacher",
+    "name email"
+  );
+  // .populate("students", "name email")
+  // .populate("quizzes", "title");
 
   res
     .status(200)
