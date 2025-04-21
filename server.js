@@ -32,6 +32,10 @@ if (process.env.NODE_ENV === "development") {
 
 // Enable CORS
 app.use(cors());
+// app.use(cors({
+//   origin: "http://localhost:3000",   // your frontend URL (Next.js)
+//   credentials: true,                 // allow credentials (Authorization header, cookies)
+// }));
 
 //Mount routes
 app.use("/api/v1/auth", auth);
