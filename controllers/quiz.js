@@ -9,7 +9,7 @@ const Submission = require("../models/Submission");
 // @route   POST /api/quizzes
 // @access  Private (Teacher only)
 exports.createQuiz = asyncHandler(async (req, res, next) => {
-  const { title, classroomId, questions } = req.body;
+  const { title, classroomId, duration, isActive, startsOn } = req.body;
 
   const classroom = await Classroom.findById(classroomId);
   if (!classroom) {
@@ -18,24 +18,27 @@ exports.createQuiz = asyncHandler(async (req, res, next) => {
 
   const quiz = await Quiz.create({
     title,
+    duration,
+    isActive,
+    startsOn,
     classroom: classroomId,
-    teacher: req.user._id,
+    createdBy: req.user._id,
   });
 
-  if (questions && questions.length > 0) {
-    const createdQuestions = await Question.insertMany(
-      questions.map((q) => ({
-        ...q,
-        quiz: quiz._id,
-      }))
-    );
+  // if (questions && questions.length > 0) {
+  //   const createdQuestions = await Question.insertMany(
+  //     questions.map((q) => ({
+  //       ...q,
+  //       quiz: quiz._id,
+  //     }))
+  //   );
 
-    quiz.questions = createdQuestions.map((q) => q._id);
-    await quiz.save();
-  }
+  //   quiz.questions = createdQuestions.map((q) => q._id);
+  //   await quiz.save();
+  // }
 
-  classroom.quizzes.push(quiz._id);
-  await classroom.save();
+  // classroom.quizzes.push(quiz._id);
+  // await classroom.save();
 
   res.status(201).json({ success: true, data: quiz });
 });
@@ -55,10 +58,10 @@ exports.getTeacherQuizzes = asyncHandler(async (req, res, next) => {
 // @route   GET /api/quizzes/:id
 // @access  Private
 exports.getQuizById = asyncHandler(async (req, res, next) => {
-  const quiz = await Quiz.findById(req.params.id)
-    .populate("classroom", "name")
-    .populate("teacher", "name email")
-    .populate("questions");
+  const quiz = await Quiz.findById(req.params.id);
+  // .populate("classroom", "name")
+  // .populate("teacher", "name email")
+  // .populate("questions");
 
   if (!quiz) {
     return next(new ErrorResponse("Quiz not found", 404));
@@ -71,34 +74,19 @@ exports.getQuizById = asyncHandler(async (req, res, next) => {
 // @route   PUT /api/quizzes/:id
 // @access  Private (Teacher only)
 exports.updateQuiz = asyncHandler(async (req, res, next) => {
-  const { title, questions } = req.body;
-
-  const quiz = await Quiz.findById(req.params.id);
+  let quiz = await Quiz.findById(req.params.id);
   if (!quiz) {
     return next(new ErrorResponse("Quiz not found", 404));
   }
 
-  if (quiz.teacher.toString() !== req.user._id.toString()) {
+  if (quiz.createdBy.toString() !== req.user._id.toString()) {
     return next(new ErrorResponse("Not authorized to update this quiz", 401));
   }
 
-  quiz.title = title || quiz.title;
-
-  if (questions && questions.length > 0) {
-    // Remove old questions
-    await Question.deleteMany({ quiz: quiz._id });
-
-    const newQuestions = await Question.insertMany(
-      questions.map((q) => ({
-        ...q,
-        quiz: quiz._id,
-      }))
-    );
-
-    quiz.questions = newQuestions.map((q) => q._id);
-  }
-
-  await quiz.save();
+  quiz = await Quiz.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true,
+  });
 
   res.status(200).json({ success: true, data: quiz });
 });
@@ -126,13 +114,16 @@ exports.deleteQuiz = asyncHandler(async (req, res, next) => {
 // @route   GET /api/quizzes/classroom/:classroomId
 // @access  Private
 exports.getQuizzesByClassroom = asyncHandler(async (req, res, next) => {
-  const quizzes = await Quiz.find({ classroom: req.params.classroomId })
-    .populate("teacher", "name email")
-    .populate("questions");
+  const quizzes = await Quiz.find({
+    classroom: req.params.classroomId,
+  }).populate("createdBy", "firstName lastName email");
+  // .populate("questions");
 
-  if (quizzes.length === 0) {
-    return next(new ErrorResponse("No quizzes found for this classroom", 404));
-  }
+  // if (quizzes.length === 0) {
+  //   return next(new ErrorResponse("No quizzes found for this classroom", 404));
+  // }
+
+  // console.log(quizzes);
 
   res.status(200).json({ success: true, count: quizzes.length, data: quizzes });
 });

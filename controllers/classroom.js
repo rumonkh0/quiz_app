@@ -40,7 +40,7 @@ exports.createClassroom = asyncHandler(async (req, res, next) => {
 exports.getTeacherClassrooms = asyncHandler(async (req, res, next) => {
   const classrooms = await Classroom.find({ teacher: req.user._id }).populate(
     "teacher",
-    "name email"
+    "firstName lastName email"
   );
   // .populate("students", "name email")
   // .populate("quizzes", "title");
@@ -54,10 +54,12 @@ exports.getTeacherClassrooms = asyncHandler(async (req, res, next) => {
 // @route   GET /api/classrooms/:id
 // @access  Private
 exports.getClassroomById = asyncHandler(async (req, res, next) => {
-  const classroom = await Classroom.findById(req.params.id)
-    .populate("teacher", "name email")
-    .populate("students", "name email")
-    .populate("quizzes", "title");
+  const classroom = await Classroom.findById(req.params.id).populate(
+    "teacher",
+    "firstName lastName email"
+  );
+  // .populate("students", "name email")
+  // .populate("quizzes", "title");
 
   if (!classroom) {
     return next(new ErrorResponse("Classroom not found", 404));

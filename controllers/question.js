@@ -29,7 +29,7 @@ exports.createQuestion = asyncHandler(async (req, res, next) => {
 // @access  Private (Teacher/Student)
 exports.getQuestionsByQuiz = asyncHandler(async (req, res, next) => {
   const questions = await Question.find({ quiz: req.params.quizId });
-
+  // console.log(questions);
   res
     .status(200)
     .json({ success: true, count: questions.length, data: questions });
@@ -76,7 +76,7 @@ exports.deleteQuestion = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse("Question not found", 404));
   }
 
-  await question.remove();
+  await question.deleteOne();
 
   res.status(200).json({ success: true, data: {} });
 });

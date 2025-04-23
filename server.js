@@ -17,6 +17,7 @@ connectDB();
 const auth = require("./routes/auth");
 const quiz = require("./routes/quiz");
 const classroom = require("./routes/classroom");
+const question = require("./routes/question");
 
 const app = express();
 
@@ -53,17 +54,21 @@ if (process.env.NODE_ENV === "development") {
 // Enable CORS
 app.use(cors());
 // app.use(cors({
-//   origin: "http://localhost:3000",   // your frontend URL (Next.js)
-//   credentials: true,                 // allow credentials (Authorization header, cookies)
+//   origin: "http://localhost:3000",  
+//   credentials: true,                 
 // }));
 
 //Mount routes
 app.use("/api/v1/auth", auth);
 app.use("/api/v1/quizzes", quiz);
 app.use("/api/v1/classrooms", classroom);
+app.use("/api/v1/questions", question);
 app.get("/", (req, res) => {
   res.status(200).json({ success: true, message: "Hello from quiz app!" });
 });
+
+// Error handling middleware
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
@@ -76,5 +81,5 @@ const server = app.listen(
 process.on("unhandledRejection", (err, promise) => {
   console.log(`Error: ${err.message}`);
   // Close server & exit process
-  // server.close(() => process.exit(1));
+  server.close(() => process.exit(1));
 });
