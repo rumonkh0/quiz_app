@@ -23,4 +23,11 @@ const ClassroomSchema = new mongoose.Schema(
   }
 );
 
+// ClassroomSchema.virtual('students', {
+//   ref: 'ClassroomMembership',
+//   localField: '_id',
+//   foreignField: 'student',
+//   justOne: false
+// });
+
 module.exports = mongoose.model("Classroom", ClassroomSchema);

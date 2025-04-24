@@ -1,6 +1,7 @@
 const ErrorResponse = require("../utils/errorResponse");
 const asyncHandler = require("../middleware/async");
 const Classroom = require("../models/Classroom");
+const ClassroomMembership = require("../models/ClassroomMembership");
 
 // @desc    Create a classroom
 // @route   POST /api/classrooms
@@ -11,7 +12,7 @@ exports.createClassroom = asyncHandler(async (req, res, next) => {
   let code;
   let classroomExists = true;
 
-  const characters = "abcdefghijklmnopqrstuvwxyz0123456789";
+  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
   while (classroomExists) {
     code = Array.from(
@@ -58,14 +59,26 @@ exports.getClassroomById = asyncHandler(async (req, res, next) => {
     "teacher",
     "firstName lastName email"
   );
-  // .populate("students", "name email")
-  // .populate("quizzes", "title");
 
   if (!classroom) {
     return next(new ErrorResponse("Classroom not found", 404));
   }
 
-  res.status(200).json({ success: true, data: classroom });
+  // Get all students in the classroom from membership
+  const memberships = await ClassroomMembership.find({ classroom: classroom._id }).populate(
+    "student",
+    "firstName lastName email"
+  );
+
+  const students = memberships.map((membership) => membership.student);
+
+  res.status(200).json({
+    success: true,
+    data: {
+      ...classroom.toObject(),
+      students, // add students array here
+    },
+  });
 });
 
 // @desc    Update classroom
@@ -117,24 +130,42 @@ exports.deleteClassroom = asyncHandler(async (req, res, next) => {
 // @route   PUT /api/classrooms/:id/join
 // @access  Private (Student only)
 exports.joinClassroom = asyncHandler(async (req, res, next) => {
-  const classroom = await Classroom.findById(req.params.id);
+  const { code } = req.body;
+
+  if (!code) {
+    return next(new ErrorResponse("Class code is required", 400));
+  }
+
+  // Find classroom by code
+  const classroom = await Classroom.findOne({ code }).populate("teacher", "firstName lastName");
 
   if (!classroom) {
     return next(new ErrorResponse("Classroom not found", 404));
   }
 
-  // Prevent duplicate entry
-  if (classroom.students.includes(req.user._id)) {
-    return next(
-      new ErrorResponse("You have already joined this classroom", 400)
-    );
+  // Check if already joined
+  const alreadyMember = await ClassroomMembership.findOne({
+    classroom: classroom._id,
+    student: req.user._id,
+  });
+
+  if (alreadyMember) {
+    return next(new ErrorResponse("Already joined this classroom", 400));
   }
 
-  classroom.students.push(req.user._id);
-  await classroom.save();
+  // Create membership
+  const membership = await ClassroomMembership.create({
+    classroom: classroom._id,
+    student: req.user._id,
+  });
 
-  res.status(200).json({ success: true, data: classroom });
+  res.status(201).json({
+    success: true,
+    message: "Joined classroom successfully",
+    data: classroom,
+  });
 });
+
 
 // @desc    Remove student from classroom
 // @route   PUT /api/classrooms/:id/remove-student
@@ -142,12 +173,17 @@ exports.joinClassroom = asyncHandler(async (req, res, next) => {
 exports.removeStudent = asyncHandler(async (req, res, next) => {
   const { studentId } = req.body;
 
+  if (!studentId) {
+    return next(new ErrorResponse("Student ID is required", 400));
+  }
+
   const classroom = await Classroom.findById(req.params.id);
 
   if (!classroom) {
     return next(new ErrorResponse("Classroom not found", 404));
   }
 
+  // Verify the teacher owns this classroom
   if (classroom.teacher.toString() !== req.user._id.toString()) {
     return next(
       new ErrorResponse(
@@ -157,11 +193,50 @@ exports.removeStudent = asyncHandler(async (req, res, next) => {
     );
   }
 
-  classroom.students = classroom.students.filter(
-    (id) => id.toString() !== studentId
+  // Find and delete the ClassroomMembership
+  const membership = await ClassroomMembership.findOneAndDelete({
+    classroom: classroom._id,
+    student: studentId
+  });
+
+  if (!membership) {
+    return next(new ErrorResponse("Student not found in this classroom", 404));
+  }
+
+  // Get updated student list for response
+  const memberships = await ClassroomMembership.find({ classroom: classroom._id }).populate(
+    "student",
+    "firstName lastName email"
   );
 
-  await classroom.save();
+  const students = memberships.map((membership) => membership.student);
 
-  res.status(200).json({ success: true, data: classroom });
+  res.status(200).json({ 
+    success: true, 
+    message: "Student removed successfully",
+    data: {
+      ...classroom.toObject(),
+      students
+    }
+  });
+});
+
+// @desc    Get classrooms where the logged-in student is enrolled (using ClassroomMembership)
+// @route   GET /api/classrooms/student
+// @access  Private (Student only)
+exports.getStudentClassrooms = asyncHandler(async (req, res, next) => {
+  const memberships = await ClassroomMembership.find({
+    student: req.user._id,
+  }).populate({
+    path: "classroom",
+  });
+
+  // Extract classrooms from memberships
+  const classrooms = memberships.map((membership) => membership.classroom);
+
+  res.status(200).json({
+    success: true,
+    count: classrooms.length,
+    data: classrooms,
+  });
 });
